@@ -13,6 +13,7 @@ export const createMovie = async (movie) => {
     body: JSON.stringify(movie),
   });
   if (!res.ok) throw new Error("Failed to create movie");
+  return res.json();
 };
 
 export const updateMovie = async (movie) => {
@@ -22,6 +23,7 @@ export const updateMovie = async (movie) => {
     body: JSON.stringify(movie),
   });
   if (!res.ok) throw new Error("Failed to update movie");
+  return res.json();
 };
 
 export const deleteMovie = async (id) => {

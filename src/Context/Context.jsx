@@ -1,4 +1,5 @@
-import React, { createContext, useState, useContext } from 'react';
+import React, { createContext, useState, useContext, useEffect } from 'react';
+import { getMovies, createMovie, updateMovie, deleteMovie } from '../services/movieService';
 
 const MovieContext = createContext();
 
@@ -17,6 +18,18 @@ export const MovieProvider = ({ children }) => {
   const [editMode, setEditMode] = useState(false);
   const [errors, setErrors] = useState({});
 
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const data = await getMovies();
+        setMovies(data);
+      } catch (error) {
+        console.error(error.message);
+      }
+    };
+    fetchMovies();
+  }, []);
+
   const validateForm = () => {
     const newErrors = {};
     if (form.title.length < 10) {
@@ -32,15 +45,20 @@ export const MovieProvider = ({ children }) => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (newMovie) => {
-    if (editMode) {
-      const updatedMovies = movies.map((movie) =>
-        movie.id === newMovie.id ? newMovie : movie
-      );
-      setMovies(updatedMovies);
-    } else {
-      const newMovieWithId = { ...newMovie, id: Date.now() }; 
-      setMovies([...movies, newMovieWithId]);
+  const handleSubmit = async (movie) => {
+    try {
+      if (editMode) {
+        const updatedMovie = await updateMovie(movie);
+        setMovies((prevMovies) =>
+          prevMovies.map((m) => (m.id === updatedMovie.id ? updatedMovie : m))
+        );
+      } else {
+        const newMovie = await createMovie(movie);
+        setMovies((prevMovies) => [...prevMovies, newMovie]);
+      }
+      resetForm();
+    } catch (error) {
+      console.error(error.message);
     }
   };
 
@@ -49,9 +67,13 @@ export const MovieProvider = ({ children }) => {
     setEditMode(true);
   };
 
-  const handleDelete = (movieId) => {
-    const updatedMovies = movies.filter((movie) => movie.id !== movieId);
-    setMovies(updatedMovies);
+  const handleDelete = async (id) => {
+    try {
+      await deleteMovie(id);
+      setMovies((prevMovies) => prevMovies.filter((movie) => movie.id !== id));
+    } catch (error) {
+      console.error(error.message);
+    }
   };
 
   const resetForm = () => {
